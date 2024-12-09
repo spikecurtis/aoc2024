@@ -1,12 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
-	"os"
 	"strconv"
 	"strings"
+
+	"github.com/spikecurtis/aoc2024/util"
 )
 
 type equation struct {
@@ -82,7 +82,7 @@ func (e equation) String(part int) string {
 }
 
 func main() {
-	eqs := parseInput(getInput())
+	eqs := parseInput(util.GetInputLines())
 	p1 := 0
 	p2 := 0
 	for _, eq := range eqs {
@@ -117,22 +117,4 @@ func parseInput(lines []string) []equation {
 		out[i] = equation{test, nums}
 	}
 	return out
-}
-
-func getInput() []string {
-	f, err := os.Open("./input")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-
-	lines := make([]string, 0)
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-	return lines
 }
