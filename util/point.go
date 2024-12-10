@@ -1,5 +1,10 @@
 package util
 
+import (
+	"errors"
+	"iter"
+)
+
 type Real interface {
 	int | int64 | float64
 }
@@ -20,6 +25,31 @@ func (p Point2D[T]) Scale(a T) Point2D[T] {
 	return Point2D[T]{p.X * a, p.Y * a}
 }
 
+func North[T Real]() Point2D[T] {
+	return Point2D[T]{0, -1}
+}
+
+func South[T Real]() Point2D[T] {
+	return Point2D[T]{0, 1}
+}
+
+func East[T Real]() Point2D[T] {
+	return Point2D[T]{1, 0}
+}
+
+func West[T Real]() Point2D[T] {
+	return Point2D[T]{-1, 0}
+}
+
+func (p Point2D[T]) CardinalNeighbors() []Point2D[T] {
+	out := make([]Point2D[T], 4)
+	out[0] = p.Plus(North[T]())
+	out[1] = p.Plus(East[T]())
+	out[2] = p.Plus(South[T]())
+	out[3] = p.Plus(West[T]())
+	return out
+}
+
 type Boundary2D[T Real] struct {
 	MinX, MinY, MaxX, MaxY T
 }
@@ -29,4 +59,31 @@ func (b Boundary2D[T]) In(point Point2D[T]) bool {
 		point.X <= b.MaxX &&
 		point.Y >= b.MinY &&
 		point.Y <= b.MaxY
+}
+
+type Grid2D[V any] struct {
+	Values [][]V
+	Bounds Boundary2D[int]
+}
+
+var OutOfBounds = errors.New("out of bounds")
+
+func (g Grid2D[V]) At(p Point2D[int]) (v V, err error) {
+	if !g.Bounds.In(p) {
+		return v, OutOfBounds
+	}
+	return g.Values[p.Y][p.X], nil
+}
+
+func (g Grid2D[V]) Iterate() iter.Seq2[Point2D[int], V] {
+	return func(yield func(p Point2D[int], v V) bool) {
+		for y, row := range g.Values {
+			for x, val := range row {
+				pnt := Point2D[int]{X: x, Y: y}
+				if !yield(pnt, val) {
+					return
+				}
+			}
+		}
+	}
 }
