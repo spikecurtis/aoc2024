@@ -41,6 +41,22 @@ func West[T Real]() Point2D[T] {
 	return Point2D[T]{-1, 0}
 }
 
+func NorthWest[T Real]() Point2D[T] {
+	return North[T]().Plus(West[T]())
+}
+
+func NorthEast[T Real]() Point2D[T] {
+	return North[T]().Plus(East[T]())
+}
+
+func SouthEast[T Real]() Point2D[T] {
+	return South[T]().Plus(East[T]())
+}
+
+func SouthWest[T Real]() Point2D[T] {
+	return South[T]().Plus(West[T]())
+}
+
 func (p Point2D[T]) CardinalNeighbors() []Point2D[T] {
 	out := make([]Point2D[T], 4)
 	out[0] = p.Plus(North[T]())
@@ -61,6 +77,18 @@ func (b Boundary2D[T]) In(point Point2D[T]) bool {
 		point.Y <= b.MaxY
 }
 
+func (b Boundary2D[int]) Iterate() iter.Seq[Point2D[int]] {
+	return func(yield func(Point2D[int]) bool) {
+		for y := b.MinY; y <= b.MaxY; y++ {
+			for x := b.MinX; x <= b.MaxX; x++ {
+				if !yield(Point2D[int]{X: x, Y: y}) {
+					return
+				}
+			}
+		}
+	}
+}
+
 type Grid2D[V any] struct {
 	Values [][]V
 	Bounds Boundary2D[int]
@@ -75,14 +103,19 @@ func (g Grid2D[V]) At(p Point2D[int]) (v V, err error) {
 	return g.Values[p.Y][p.X], nil
 }
 
+func (g Grid2D[V]) Set(p Point2D[int], v V) error {
+	if !g.Bounds.In(p) {
+		return OutOfBounds
+	}
+	g.Values[p.Y][p.X] = v
+	return nil
+}
+
 func (g Grid2D[V]) Iterate() iter.Seq2[Point2D[int], V] {
 	return func(yield func(p Point2D[int], v V) bool) {
-		for y, row := range g.Values {
-			for x, val := range row {
-				pnt := Point2D[int]{X: x, Y: y}
-				if !yield(pnt, val) {
-					return
-				}
+		for pnt := range g.Bounds.Iterate() {
+			if !yield(pnt, g.Values[pnt.Y][pnt.X]) {
+				return
 			}
 		}
 	}
