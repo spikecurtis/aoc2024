@@ -66,6 +66,17 @@ func (p Point2D[T]) CardinalNeighbors() []Point2D[T] {
 	return out
 }
 
+func Abs[T Real](x T) T {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+func (p Point2D[T]) L1Norm() T {
+	return Abs(p.X) + Abs(p.Y)
+}
+
 type Boundary2D[T Real] struct {
 	MinX, MinY, MaxX, MaxY T
 }
